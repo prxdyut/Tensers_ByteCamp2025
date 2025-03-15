@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import axios from 'axios';
 
-// Components will be created next
+// Components
 import AQIDisplay from './components/AQIDisplay';
 import LocationSearch from './components/LocationSearch';
+import Me from './components/Me';
 
 interface Location {
   lat: number | null;
@@ -22,7 +24,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 2,
       staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
-      cacheTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
+      gcTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
     },
   },
 });
@@ -33,96 +35,77 @@ function App() {
     lng: null,
     name: '',
   });
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  const handleGeolocationError = (error: GeolocationError) => {
-    console.error('Geolocation error:', error);
-    let errorMessage = 'Failed to get your location. ';
-    
-    switch (error.code) {
-      case 1:
-        errorMessage += 'Please allow location access to get local AQI data.';
-        break;
-      case 2:
-        errorMessage += 'Position unavailable. Please try again or search manually.';
-        break;
-      case 3:
-        errorMessage += 'Request timed out. Please try again or search manually.';
-        break;
-      default:
-        errorMessage += 'Please try searching for a location manually.';
+  const fetchAQIData = async (lat: number, lng: number) => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/save_location?lat=${lat}&lon=${lng}`
+      );
+      console.log('Initial AQI data received:', response.data);
+    } catch (error) {
+      console.error('Error fetching initial AQI data:', error);
+      setLocationError('Failed to fetch air quality data for your location. Please try searching manually.');
     }
-    
-    setLocationError(errorMessage);
   };
 
-  useEffect(() => {
-    // Get user's current location on component mount
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser. Please search for a location manually.');
-      return;
-    }
-
-    setLocationError(null); // Reset error state before attempting to get location
-    
-    const geoOptions = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0
-    };
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log('Location obtained successfully:', {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          accuracy: position.coords.accuracy
-        });
-        
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          name: 'Current Location',
-        });
-        setLocationError(null);
-      },
-      handleGeolocationError,
-      geoOptions
-    );
-  }, []);
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setLocation({
+      lat: null,
+      lng: null,
+      name: query
+    });
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 p-4">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold text-blue-800 mb-8 text-center">
-            Air Quality Index Monitor
-          </h1>
-          
-          <div className="space-y-6">
-            {locationError && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+      <Router>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+          <nav className="bg-white shadow-lg">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between h-16">
                 <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-yellow-700">
-                      {locationError}
-                    </p>
-                  </div>
+                  <Link to="/" className="flex items-center px-4 hover:text-blue-600 font-medium">
+                    Home
+                  </Link>
+                  <Link to="/me" className="flex items-center px-4 hover:text-blue-600 font-medium">
+                    My Location
+                  </Link>
                 </div>
               </div>
-            )}
-            <LocationSearch onLocationSelect={setLocation} />
-            <AQIDisplay location={location} />
+            </div>
+          </nav>
+
+          <div className="p-6">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <div className="max-w-3xl mx-auto">
+                    <div className="text-center mb-12">
+                      <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+                        Air Quality Index Monitor
+                      </h1>
+                      <p className="text-gray-600 text-lg">
+                        Get real-time air quality data for any location worldwide
+                      </p>
+                    </div>
+                    <div className="space-y-8">
+                      <LocationSearch onLocationSelect={setLocation} onSearch={handleSearch} />
+                      <AQIDisplay location={location} searchQuery={searchQuery} />
+                    </div>
+                  </div>
+                }
+              />
+              <Route path="/me" element={<Me />} />
+            </Routes>
           </div>
         </div>
-      </div>
+      </Router>
     </QueryClientProvider>
   );
 }
 
-export default App; 
+export default App;

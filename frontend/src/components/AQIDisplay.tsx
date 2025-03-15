@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import axios, { AxiosError } from 'axios';
+import { useEffect, useState } from 'react';
 
 interface Location {
   lat: number | null;
@@ -9,49 +10,80 @@ interface Location {
 
 interface AQIDisplayProps {
   location: Location;
+  searchQuery?: string;
 }
 
 interface AQIResponse {
-  dateTime: string;
-  indexes: {
-    aqi: number;
-    aqiDisplay: string;
-    category: string;
-    code: string;
-    color: {
-      green: number;
-      red: number;
-    };
-    displayName: string;
-    dominantPollutant: string;
-  }[];
-  regionCode: string;
+  air_quality_data: {
+    dateTime: string;
+    indexes: {
+      aqi: number;
+      aqiDisplay: string;
+      category: string;
+      code: string;
+      color: {
+        green: number;
+        red: number;
+      };
+      displayName: string;
+      dominantPollutant: string;
+    }[];
+    regionCode: string;
+  };
+  place_name: string;
 }
 
-const AQIDisplay = ({ location }: AQIDisplayProps) => {
+const AQIDisplay = ({ location, searchQuery }: AQIDisplayProps) => {
+  const [browserLocation, setBrowserLocation] = useState<Location>({
+    lat: null,
+    lng: null,
+    name: ''
+  });
+
+  useEffect(() => {
+    if (navigator.geolocation && !location.lat && !location.lng && !searchQuery) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setBrowserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            name: 'Current Location'
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  }, [location.lat, location.lng, searchQuery]);
+
   const { data: aqiData, isLoading, error, isError } = useQuery<AQIResponse, AxiosError>({
-    queryKey: ['aqi', location.lat, location.lng],
+    queryKey: ['aqi', location.lat || browserLocation.lat, location.lng || browserLocation.lng, searchQuery],
     queryFn: async () => {
       try {
-        console.log('Fetching AQI data for location:', {
-          lat: location.lat,
-          lng: location.lng,
-          name: location.name
-        });
+        let url: string;
+        
+        if (searchQuery) {
+          console.log('Fetching AQI data for search query:', searchQuery);
+          url = `http://127.0.0.1:5000/search_area?query=${encodeURIComponent(searchQuery)}`;
+        } else {
+          const lat = location.lat || browserLocation.lat;
+          const lng = location.lng || browserLocation.lng;
 
-        if (!location.lat || !location.lng) {
-          throw new Error('Invalid location coordinates');
+          console.log('Fetching AQI data for location:', {
+            lat,
+            lng,
+            name: location.name || browserLocation.name
+          });
+
+          if (!lat || !lng) {
+            throw new Error('Invalid location coordinates');
+          }
+
+          url = `http://127.0.0.1:5000/save_location?lat=${lat}&lon=${lng}`;
         }
 
-        const response = await axios.get(
-          `https://5748-136-232-248-186.ngrok-free.app/save_location?lat=${location.lat}&lon=${location.lng}`,
-          {
-            headers: {
-              // 'ngrok-skip-browser-warning': '69420'
-            }
-          }
-        );
-
+        const response = await axios.get(url);
         console.log('AQI data received:', response.data);
         return response.data;
       } catch (err) {
@@ -59,23 +91,23 @@ const AQIDisplay = ({ location }: AQIDisplayProps) => {
         throw err;
       }
     },
-    enabled: !!location.lat && !!location.lng,
+    enabled: (!!(location.lat && location.lng) || !!(browserLocation.lat && browserLocation.lng)) || !!searchQuery,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  if (!location.lat || !location.lng) {
+  if (!location.lat && !location.lng && !browserLocation.lat && !browserLocation.lng && !searchQuery) {
     return (
-      <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-        <p className="text-gray-600">Please select a location to view air quality data.</p>
+      <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100">
+        <p className="text-gray-600">Please select a location or search for a place to view air quality data.</p>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-8 bg-white rounded-lg shadow-lg">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="flex justify-center items-center p-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-600"></div>
       </div>
     );
   }
@@ -88,16 +120,16 @@ const AQIDisplay = ({ location }: AQIDisplayProps) => {
       : 'An unexpected error occurred.';
 
     return (
-      <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+      <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100">
         <div className="flex flex-col items-center space-y-4">
-          <svg className="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-12 w-12 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-red-600">{errorMessage}</p>
+          <p className="text-rose-600 font-medium">{errorMessage}</p>
           {error instanceof AxiosError && error.response?.status !== 404 && (
             <button 
               onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Try Again
             </button>
@@ -107,60 +139,68 @@ const AQIDisplay = ({ location }: AQIDisplayProps) => {
     );
   }
 
-  if (!aqiData || !aqiData.indexes || aqiData.indexes.length === 0) {
+  if (!aqiData || !aqiData.air_quality_data || !aqiData.air_quality_data.indexes || aqiData.air_quality_data.indexes.length === 0) {
     return (
-      <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-        <p className="text-red-600">No air quality data available for this location.</p>
+      <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100">
+        <p className="text-rose-600 font-medium">No air quality data available for this location.</p>
       </div>
     );
   }
 
-  const index = aqiData.indexes[0];
-  const rgbColor = `rgba(${Math.round(index.color.red * 255)}, ${Math.round(index.color.green * 255)}, 0, 1)`;
+  const index = aqiData.air_quality_data.indexes[0];
+  const rgbColor = `rgba(${Math.round(index.color.red * 255)}, ${Math.round(index.color.green * 255)}, 0, 0.95)`;
+  const displayName = searchQuery ? aqiData.place_name : (location.name || browserLocation.name);
+
+  // Get AQI category color
+  const getAQIColor = (aqi: number) => {
+    if (aqi <= 50) return 'bg-emerald-500';
+    if (aqi <= 100) return 'bg-yellow-500';
+    if (aqi <= 150) return 'bg-orange-500';
+    if (aqi <= 200) return 'bg-red-500';
+    if (aqi <= 300) return 'bg-purple-500';
+    return 'bg-rose-900';
+  };
+
+  const aqiColor = getAQIColor(index.aqi);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">{location.name}</h2>
-        <div 
-          className="inline-block px-4 py-2 rounded-full text-white"
-          style={{ backgroundColor: rgbColor }}
-        >
-          <span className="text-3xl font-bold">{index.aqiDisplay}</span>
-          <span className="ml-2">{index.category}</span>
+    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-8 space-y-8 transition-all duration-300">
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">{displayName}</h2>
+        <div className="flex flex-col items-center gap-2">
+          <div 
+            className={`${aqiColor} px-6 py-3 rounded-xl text-white shadow-lg transform transition-transform duration-200 hover:scale-105`}
+          >
+            <span className="text-4xl font-bold">{index.aqiDisplay}</span>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Air Quality Details</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <div className="text-sm text-gray-600">Index Type</div>
-            <div className="text-lg font-semibold">{index.displayName}</div>
+      <div className="space-y-6">
+        <h3 className="text-2xl font-semibold text-gray-800">Air Quality Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gray-50/80 backdrop-blur-sm p-4 rounded-xl border border-gray-100 transition-all duration-200 hover:shadow-md">
+            <div className="text-sm text-gray-500 font-medium">Index Type</div>
+            <div className="text-lg font-semibold text-gray-800">{index.displayName}</div>
           </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <div className="text-sm text-gray-600">Main Pollutant</div>
-            <div className="text-lg font-semibold">{index.dominantPollutant.toUpperCase()}</div>
+          <div className="bg-gray-50/80 backdrop-blur-sm p-4 rounded-xl border border-gray-100 transition-all duration-200 hover:shadow-md">
+            <div className="text-sm text-gray-500 font-medium">Main Pollutant</div>
+            <div className="text-lg font-semibold text-gray-800">{index.dominantPollutant.toUpperCase()}</div>
           </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <div className="text-sm text-gray-600">Region</div>
-            <div className="text-lg font-semibold">{aqiData.regionCode.toUpperCase()}</div>
+          <div className="bg-gray-50/80 backdrop-blur-sm p-4 rounded-xl border border-gray-100 transition-all duration-200 hover:shadow-md">
+            <div className="text-sm text-gray-500 font-medium">Region</div>
+            <div className="text-lg font-semibold text-gray-800">{aqiData.air_quality_data.regionCode.toUpperCase()}</div>
           </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <div className="text-sm text-gray-600">Last Updated</div>
-            <div className="text-lg font-semibold">
-              {new Date(aqiData.dateTime).toLocaleString()}
+          <div className="bg-gray-50/80 backdrop-blur-sm p-4 rounded-xl border border-gray-100 transition-all duration-200 hover:shadow-md">
+            <div className="text-sm text-gray-500 font-medium">Last Updated</div>
+            <div className="text-lg font-semibold text-gray-800">
+              {new Date(aqiData.air_quality_data.dateTime).toLocaleString()}
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="border-t pt-4">
-        <h3 className="text-xl font-semibold mb-2">Air Quality Category</h3>
-        <p className="text-gray-700">{index.category}</p>
       </div>
     </div>
   );
 };
 
-export default AQIDisplay; 
+export default AQIDisplay;
