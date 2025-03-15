@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Fetch</title>
+</head>
+<body>
+
+    <h2>User Location</h2>
+    <div id="response">Fetching location...</div> <!-- To display response -->
+
+    <script>
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                console.log(`Sending lat=${lat}, lon=${lon}`); // Debugging
+
+                fetch(`/save_location?lat=${lat}&lon=${lon}`)
+                    .then(response => {
+                        console.log("Raw response:", response); // Debugging
+                        if (!response.ok) throw new Error("Network error");
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Response from server:", data);
+                        document.getElementById("response").innerText = JSON.stringify(data, null, 2);
+                    })
+                    .catch(error => {
+                        console.error("Error fetching data:", error);
+                        document.getElementById("response").innerText = "Error fetching location data.";
+                    });
+            },
+            error => {
+                console.error("Geolocation error:", error.message);
+                document.getElementById("response").innerText = "Geolocation permission denied or unavailable.";
+            }
+        );
+    </script>
+
+</body>
+</html>
