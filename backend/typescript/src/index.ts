@@ -5,7 +5,7 @@ import { startAirQualityMonitoring } from './services/airQualityMonitor';
 import routes from './routes';
 import stats from './routes/stats';
 import cors from 'cors';
-
+import heatDataRouter from './routes/heat-data';
 const AUTHORIZED_NUMBER = '919152051206'; // Your number without + symbol
 
 const app = express();
@@ -20,6 +20,8 @@ async function startServer() {
         app.use(cors());
         app.use('/', routes);
         app.use('/stats', stats);
+        
+        app.use('/heat-data', heatDataRouter);
 
         // Start monitoring service
         startAirQualityMonitoring(AUTHORIZED_NUMBER);

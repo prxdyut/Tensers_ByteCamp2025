@@ -4,7 +4,12 @@ const menuItems = [
     {
         title: "Dashboard",
         icon: "solar:home-smile-angle-outline",
-        link: "dashboard.html"
+        link: "/"
+    },
+    {
+        title: "Flood Detection",
+        icon: "carbon:cloud-satellite",
+        link: "/flood-detection"
     },
     {
         title: "AI Doctor",
@@ -36,17 +41,17 @@ const Sidebar = () => {
         <div>
             <a href="index-2.html" className="sidebar-logo">
                 <img
-                    src="assets/images/logo.png"
+                    src="assets/imaes/logo.png"
                     alt="site logo"
                     className="light-logo"
                 />
                 <img
-                    src="assets/images/logo-light.png"
+                    src="assets/iages/logo-light.png"
                     alt="site logo"
                     className="dark-logo"
                 />
                 <img
-                    src="assets/images/logo-icon.png"
+                    src="assets/image/logo-icon.png"
                     alt="site logo"
                     className="logo-icon"
                 />

@@ -105,47 +105,7 @@ const Home = () => {
             methane: statsData.hourly.methane[index],
         }));
     };
-
-    useEffect(() => {
-      // Add stylesheets
-      const stylesheets = [
-        "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-        "assets/css/style.css"
-      ];
-
-      stylesheets.forEach(href => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        document.head.appendChild(link);
-      });
-
-      // Add scripts
-      const scripts = [
-        "assets/js/app.js",
-      ];
-
-      scripts.forEach(src => {
-        const script = document.createElement('script');
-        script.src = src;
-        document.body.appendChild(script);
-      });
-
-      // Cleanup function to remove added elements when component unmounts
-      return () => {
-        stylesheets.forEach(href => {
-          const link = document.querySelector(`link[href="${href}"]`);
-          if (link) link.remove();
-        });
-
-        scripts.forEach(src => {
-          const script = document.querySelector(`script[src="${src}"]`);
-          if (script) script.remove();
-        });
-      };
-    }, []);
     return <>
-        <Sidebar />
         <main className="dashboard-main">
             <div className="navbar-header border-b border-neutral-200 dark:border-neutral-600">
                 <div className="flex items-center justify-between">
@@ -655,7 +615,7 @@ const Home = () => {
             <footer className="d-footer">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <p className="mb-0 text-neutral-600">
-                        © {new Date().getFullYear()} WeatherWatch. All Rights Reserved.
+                        © {new Date().getFullYear()} TensersWatch. All Rights Reserved.
                     </p>
                     <p className="mb-0">
                         Powered by{" "}
@@ -663,7 +623,7 @@ const Home = () => {
                             href="#"
                             className="text-primary-600 dark:text-primary-600 hover:underline"
                         >
-                            Environmental Monitoring Systems
+                            Tensers
                         </a>
                     </p>
                 </div>
