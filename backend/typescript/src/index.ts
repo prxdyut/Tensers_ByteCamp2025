@@ -1,7 +1,7 @@
 import express from 'express';
 import { PORT } from './config/config';
 import { initializeWhatsAppClient } from './services/whatsappClient';
-import { startAirQualityMonitoring } from './services/airQualityMonitor';
+import { startEnvironmentalMonitoring } from './services/environmentalMonitor';
 import routes from './routes';
 import stats from './routes/stats';
 import cors from 'cors';
@@ -20,11 +20,10 @@ async function startServer() {
         app.use(cors());
         app.use('/', routes);
         app.use('/stats', stats);
-        
         app.use('/heat-data', heatDataRouter);
 
-        // Start monitoring service
-        startAirQualityMonitoring(AUTHORIZED_NUMBER);
+        // Start combined environmental monitoring service
+        startEnvironmentalMonitoring(AUTHORIZED_NUMBER);
 
         // Start server
         app.listen(PORT, () => {
