@@ -24,7 +24,7 @@ const menuItems = [
     {
         title: "Heat Wave Detection",
         icon: "wi:thermometer",
-        link: "heat-wave.html"
+        link: "/heatwave-detection"
     },
     {
         title: "Blog & Articles",

@@ -6,6 +6,7 @@ import routes from './routes';
 import stats from './routes/stats';
 import cors from 'cors';
 import heatDataRouter from './routes/heat-data';
+import audioRouter from './routes/audio';
 const AUTHORIZED_NUMBER = '919152051206'; // Your number without + symbol
 
 const app = express();
@@ -21,6 +22,7 @@ async function startServer() {
         app.use('/', routes);
         app.use('/stats', stats);
         app.use('/heat-data', heatDataRouter);
+        app.use('/audio', audioRouter);
 
         // Start combined environmental monitoring service
         startEnvironmentalMonitoring(AUTHORIZED_NUMBER);

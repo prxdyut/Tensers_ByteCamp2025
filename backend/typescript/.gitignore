@@ -9,3 +9,4 @@ node_modules
 .wwebjs_cache
 
 src/media
+uploads

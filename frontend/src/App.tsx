@@ -7,6 +7,7 @@ import { Sidebar } from './components/Sidebar';
 import FloodDetection from './routes/FloodDetection';
 import { useEffect } from 'react';
 import HeatWaveDetection from './routes/HeatWaveDetection';
+import VoiceAnalyser from './routes/VoiceAnalyser';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,6 +70,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/heatwave-detection" element={<HeatWaveDetection />} />
           <Route path="/flood-detection" element={<FloodDetection />} />
+          <Route path="/voice-analyser" element={<VoiceAnalyser />} />
         </Routes>
       </Router>
     </QueryClientProvider>
