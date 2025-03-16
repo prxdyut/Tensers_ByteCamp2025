@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import HeatWaveDetection from './routes/HeatWaveDetection';
 import VoiceAnalyser from './routes/VoiceAnalyser';
 import HealthNews from './routes/HealthNews';
+import { Doctor } from './routes/AiDoctor';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,7 @@ function App() {
           <Route path="/flood-detection" element={<FloodDetection />} />
           <Route path="/voice-analyser" element={<VoiceAnalyser />} />
           <Route path="/read" element={<HealthNews />} />
+          <Route path="/ai-doctor" element={<Doctor />} />
         </Routes>
       </Router>
     </QueryClientProvider>
