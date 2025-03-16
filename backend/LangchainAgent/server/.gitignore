@@ -21,6 +21,8 @@ package-lock.json
 *.swp
 *.swo
 .DS_Store
+.wwebjs_auth/
+.wwebjs_cache/
 
 # Logs
 logs
