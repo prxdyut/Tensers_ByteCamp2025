@@ -19,7 +19,7 @@ const menuItems = [
     {
         title: "Voice Analyser", 
         icon: "carbon:audio-console",
-        link: "voice-analyser.html"
+        link: "/voice-analyser"
     },
     {
         title: "Heat Wave Detection",
@@ -29,7 +29,7 @@ const menuItems = [
     {
         title: "Blog & Articles",
         icon: "ph:newspaper",
-        link: "blog.html"
+        link: "/read"
     }
 ];
 
@@ -40,21 +40,21 @@ const Sidebar = () => {
         </button>
         <div>
             <a href="index-2.html" className="sidebar-logo">
-                <img
+                {/* <img
                     src="assets/imaes/logo.png"
                     alt="site logo"
                     className="light-logo"
-                />
-                <img
+                /> */}
+                {/* <img
                     src="assets/iages/logo-light.png"
                     alt="site logo"
                     className="dark-logo"
-                />
-                <img
+                /> */}
+                {/* <img
                     src="assets/image/logo-icon.png"
                     alt="site logo"
                     className="logo-icon"
-                />
+                /> */}
             </a>
         </div>
         <div className="sidebar-menu-area">

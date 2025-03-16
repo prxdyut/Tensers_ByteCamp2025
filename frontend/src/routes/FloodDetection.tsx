@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import InteractiveMap from '../components/InteractiveMap';
+const ngrock = "https://2974-136-232-248-186.ngrok-free.app/video_feed"
 
 interface Location {
     lat: number;
@@ -20,6 +21,7 @@ interface FloodData {
 const FloodDetection: React.FC = () => {
     const [location, setLocation] = useState<Location | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [initialId, setInitialId] = useState(1);
     const videoRef = useRef<HTMLImageElement>(null);
 
     // Get user's location on component mount
@@ -43,29 +45,14 @@ const FloodDetection: React.FC = () => {
     // Handle location change from map
     const handleLocationChange = (newLocation: Location) => {
         setLocation(newLocation);
+        setInitialId(prevId => prevId + 1);
     };
-
-    // Fetch flood data using React Query
-    const { data: floodData, isLoading: floodDataLoading } = useQuery({
-        queryKey: ['flood-data', location?.lat, location?.lng],
-        queryFn: async () => {
-            if (!location) throw new Error('Location not available');
-            const response = await axios.get('http://localhost:3000/flood-data', {
-                params: {
-                    latitude: location.lat,
-                    longitude: location.lng
-                }
-            });
-            return response.data as FloodData;
-        },
-        enabled: !!location,
-    });
 
     // Optimize video stream
     useEffect(() => {
         const updateImage = () => {
             if (videoRef.current) {
-                videoRef.current.src = `https://2849-49-248-175-242.ngrok-free.app/video_feed?t=${new Date().getTime()}`;
+                videoRef.current.src = `${ngrock}/${initialId}?t=${new Date().getTime()}`;
             }
         };
 
@@ -73,7 +60,7 @@ const FloodDetection: React.FC = () => {
         const interval = setInterval(updateImage, 1000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [initialId]);
 
     return (
         <main className="dashboard-main">
@@ -164,15 +151,11 @@ const FloodDetection: React.FC = () => {
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                     <div className="card h-full xl:col-span-12 2xl:col-span-9">
                         <div className="relative aspect-video rounded-lg overflow-hidden">
-                            <img 
+                            <img
                                 ref={videoRef}
-                                src="https://2849-49-248-175-242.ngrok-free.app/video_feed" 
-                                alt="Flood Detection Stream" 
+                                src={ngrock}
+                                alt="Flood Detection Stream"
                                 className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    const img = e.target as HTMLImageElement;
-                                    img.src = `${img.src}?retry=${new Date().getTime()}`;
-                                }}
                             />
                             <div className="absolute bottom-4 left-4 right-4 bg-black/50 text-white p-4 rounded-lg">
                                 <div className="flex items-center justify-between">
@@ -187,60 +170,15 @@ const FloodDetection: React.FC = () => {
                     </div>
 
                     <div className="xl:col-span-12 2xl:col-span-3">
-                        <InteractiveMap 
+                        <InteractiveMap
                             location={location}
                             onLocationChange={handleLocationChange}
                         />
-                        
+
                         {location && (
                             <div className="card mt-6 rounded-lg border-0 bg-white dark:bg-neutral-800">
                                 <div className="card-body p-5">
                                     <h6 className="font-semibold text-lg mb-4 dark:text-white">Flood Analysis</h6>
-                                    
-                                    {floodDataLoading ? (
-                                        <div className="animate-pulse space-y-4">
-                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                                        </div>
-                                    ) : floodData ? (
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center p-3 bg-neutral-50 dark:bg-neutral-700 rounded-lg">
-                                                <span className="text-sm text-neutral-600 dark:text-neutral-300">Water Level</span>
-                                                <span className="font-semibold dark:text-white">{floodData.waterLevel}m</span>
-                                            </div>
-                                            
-                                            <div className="flex justify-between items-center p-3 bg-neutral-50 dark:bg-neutral-700 rounded-lg">
-                                                <span className="text-sm text-neutral-600 dark:text-neutral-300">Flood Risk</span>
-                                                <span className={`font-semibold ${
-                                                    floodData.floodRisk === 'Low' ? 'text-green-500' :
-                                                    floodData.floodRisk === 'Moderate' ? 'text-yellow-500' :
-                                                    floodData.floodRisk === 'High' ? 'text-orange-500' :
-                                                    'text-red-500'
-                                                }`}>
-                                                    {floodData.floodRisk}
-                                                </span>
-                                            </div>
-                                            
-                                            <div className="flex justify-between items-center p-3 bg-neutral-50 dark:bg-neutral-700 rounded-lg">
-                                                <span className="text-sm text-neutral-600 dark:text-neutral-300">Precipitation</span>
-                                                <span className="font-semibold dark:text-white">{floodData.precipitation}mm/h</span>
-                                            </div>
-                                            
-                                            <div className="flex justify-between items-center p-3 bg-neutral-50 dark:bg-neutral-700 rounded-lg">
-                                                <span className="text-sm text-neutral-600 dark:text-neutral-300">Flow Rate</span>
-                                                <span className="font-semibold dark:text-white">{floodData.flowRate}m³/s</span>
-                                            </div>
-                                            
-                                            <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-4">
-                                                Last updated: {new Date(floodData.lastUpdated).toLocaleString()}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="text-neutral-500 dark:text-neutral-400">
-                                            Select a location to view flood analysis data
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}

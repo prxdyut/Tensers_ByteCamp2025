@@ -1,0 +1,1 @@
+export const voicePrediction = "https://182d-35-238-250-153.ngrok-free.app/predict"
